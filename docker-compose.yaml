@@ -1,18 +1,23 @@
 name: keycloak-quickstart
 
+volumes:
+  # Backup-Strategie bedenken!
+  postgresGoData: { }
+  postgresKeycloakData: { }
+
 services:
   keycloak:
     image: quay.io/keycloak/keycloak:${TAG_KC}
     # start-dev: nur für Entwicklung/Tests – nicht in Produktivumgebungen!
     command: start-dev
     depends_on:
-      - kcdb
+      - keycloakdb
     environment:
       # Datenbank-Konfiguration
       KC_DB: postgres
-      KC_DB_URL_HOST: kcdb
-      KC_DB_USERNAME: ${DB_USER}
-      KC_DB_PASSWORD: ${DB_PW}
+      KC_DB_URL_HOST: keycloakdb
+      KC_DB_USERNAME: ${DB_USER_KC}
+      KC_DB_PASSWORD: ${DB_PW_KC}
       # Temporärer Admin für die Ersteinrichtung
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PW}
@@ -27,17 +32,27 @@ services:
       # HTTP-Port. Produktiv nur TLS nutzen!
       - "8080:8080"
 
-  kcdb:
+  keycloakdb:
     image: postgres:${TAG_DB}
+    ports:
+      - "5432:5432"  # ← EXTERNER ZUGRIFF aktiviert nur für dev mode nötig
     restart: unless-stopped
     volumes:
-      - postgresData:/var/lib/postgresql
+      - postgresKeycloakData:/var/lib/postgresql
     environment:
       POSTGRES_DB: keycloak
+      POSTGRES_USER: ${DB_USER_KC}
+      POSTGRES_PASSWORD: ${DB_PW_KC}
+
+
+  godb:
+    image: postgres:${TAG_DB}
+    ports:
+      - "5433:5432"  # ← EXTERNER ZUGRIFF aktiviert nur für dev mode nötig
+    restart: unless-stopped
+    volumes:
+      - postgresGoData:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: backend
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PW}
-
-
-volumes:
-  # Backup-Strategie bedenken!
-  postgresData: {}
