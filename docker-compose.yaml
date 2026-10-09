@@ -1,8 +1,10 @@
 name: keycloak-quickstart
 
+include:
+  - ./backend/docker-compose.yml
+
 volumes:
   # Backup-Strategie bedenken!
-  postgresGoData: { }
   postgresKeycloakData: { }
 
 services:
@@ -43,16 +45,3 @@ services:
       POSTGRES_DB: keycloak
       POSTGRES_USER: ${DB_USER_KC}
       POSTGRES_PASSWORD: ${DB_PW_KC}
-
-
-  godb:
-    image: postgres:${TAG_DB}
-    ports:
-      - "5433:5432"  # ← EXTERNER ZUGRIFF aktiviert nur für dev mode nötig
-    restart: unless-stopped
-    volumes:
-      - postgresGoData:/var/lib/postgresql
-    environment:
-      POSTGRES_DB: backend
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PW}
