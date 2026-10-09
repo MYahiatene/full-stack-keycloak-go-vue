@@ -1,0 +1,17 @@
+name: backend-db
+
+volumes:
+  postgresGoData: { }
+
+services:
+  godb:
+    image: postgres:${TAG_DB}
+    ports:
+      - "5433:5432"  # ← EXTERNER ZUGRIFF aktiviert nur für dev mode nötig
+    restart: unless-stopped
+    volumes:
+      - postgresGoData:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: backend
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PW}
