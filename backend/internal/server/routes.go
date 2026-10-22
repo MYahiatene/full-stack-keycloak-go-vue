@@ -1,6 +1,7 @@
 package server
 
 import (
+	"backend/internal/database"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -51,7 +52,12 @@ func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	resp, err := json.Marshal(s.db.Health())
+	stats, err := database.Health(s.db)
+	if err != nil {
+		http.Error(w, "Failed to ping database", http.StatusServiceUnavailable)
+		return
+	}
+	resp, err := json.Marshal(stats)
 	if err != nil {
 		http.Error(w, "Failed to marshal health check response", http.StatusInternalServerError)
 		return
