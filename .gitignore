@@ -3,6 +3,7 @@
 # Secrets niemals einchecken – nur .env.example wird versioniert
 .env
 *.env
+/intellij_http/http-client.private.env.json
 !.env.example
 
 # Lokale Daten / Backups

@@ -1,0 +1,192 @@
+Project pet_feeding_tracker {
+  database_type: 'PostgreSQL'
+}
+
+// ───────── Benutzer & Haushalt ─────────
+
+Table users {
+  id            uuid [pk, default: `gen_random_uuid()`]
+  keycloak_sub  varchar(64) [unique, not null, note: 'User-ID aus dem Keycloak-Token']
+  display_name  varchar(100) [not null]
+  email         varchar(255) [unique, not null]
+  avatar_url    varchar(500)
+  locale        varchar(10) [default: 'de']
+  timezone      varchar(50) [default: 'Europe/Berlin']
+  created_at    timestamptz [default: `now()`]
+}
+
+Table households {
+  id          uuid [pk, default: `gen_random_uuid()`]
+  name        varchar(100) [not null, note: 'z. B. "Familie Yahiatene"']
+  created_by  uuid [ref: > users.id]
+  created_at  timestamptz [default: `now()`]
+}
+
+Table household_members {
+  household_id  uuid [ref: > households.id]
+  user_id       uuid [ref: > users.id]
+  role          member_role [not null, default: 'member']
+  joined_at     timestamptz [default: `now()`]
+  indexes {
+    (household_id, user_id) [pk]
+  }
+}
+
+Table household_invites {
+  id            uuid [pk, default: `gen_random_uuid()`]
+  household_id  uuid [ref: > households.id, not null]
+  email         varchar(255) [not null]
+  token         varchar(64) [unique, not null]
+  status        invite_status [default: 'pending']
+  expires_at    timestamptz [not null]
+  created_by    uuid [ref: > users.id]
+  created_at    timestamptz [default: `now()`]
+}
+
+Enum member_role {
+  owner
+  member
+}
+
+Enum invite_status {
+  pending
+  accepted
+  expired
+  revoked
+}
+
+// ───────── Haustiere ─────────
+
+Table pets {
+  id            uuid [pk, default: `gen_random_uuid()`]
+  household_id  uuid [ref: > households.id, not null]
+  name          varchar(100) [not null]
+  species       species [not null]
+  breed         varchar(100)
+  sex           varchar(10)
+  birth_date    date
+  neutered      boolean [default: false]
+  photo_url     varchar(500)
+  chip_number   varchar(30)
+  notes         text
+  is_active     boolean [default: true, note: 'false = verstorben/abgegeben']
+  created_at    timestamptz [default: `now()`]
+}
+
+Enum species {
+  dog
+  cat
+  rabbit
+  bird
+  fish
+  other
+}
+
+Table pet_weights {
+  id          uuid [pk, default: `gen_random_uuid()`]
+  pet_id      uuid [ref: > pets.id, not null]
+  weight_kg   numeric(6,2) [not null]
+  measured_at timestamptz [not null]
+  recorded_by uuid [ref: > users.id]
+}
+
+// ───────── Futter ─────────
+
+Table food_products {
+  id              uuid [pk, default: `gen_random_uuid()`]
+  household_id    uuid [ref: > households.id, not null]
+  name            varchar(150) [not null]
+  brand           varchar(100)
+  food_type       food_type [not null]
+  kcal_per_100g   numeric(6,1)
+  package_size_g  integer
+  notes           text
+  is_active       boolean [default: true]
+}
+
+Enum food_type {
+  dry
+  wet
+  treat
+  raw
+  supplement
+  other
+}
+
+Table food_stock {
+  id              uuid [pk, default: `gen_random_uuid()`]
+  food_id         uuid [ref: > food_products.id, not null]
+  amount_g        integer [not null, note: 'aktueller Vorrat']
+  low_threshold_g integer [note: 'Warnung bei Unterschreitung']
+  updated_at      timestamptz [default: `now()`]
+}
+
+// ───────── Fütterungen (Kern) ─────────
+
+Table feedings {
+  id           uuid [pk, default: `gen_random_uuid()`]
+  pet_id       uuid [ref: > pets.id, not null]
+  food_id      uuid [ref: > food_products.id]
+  fed_by       uuid [ref: > users.id, not null, note: 'Wer hat gefüttert?']
+  schedule_id  uuid [ref: > feeding_schedules.id, note: 'optional: zu welchem Plan gehört es']
+  amount_g     numeric(7,1) [not null]
+  fed_at       timestamptz [not null, default: `now()`]
+  note         varchar(500)
+  created_at   timestamptz [default: `now()`]
+  indexes {
+    (pet_id, fed_at)
+  }
+}
+
+Table feeding_schedules {
+  id            uuid [pk, default: `gen_random_uuid()`]
+  pet_id        uuid [ref: > pets.id, not null]
+  food_id       uuid [ref: > food_products.id]
+  label         varchar(50) [note: 'z. B. Morgens, Abends']
+  time_of_day   time [not null]
+  amount_g      numeric(7,1) [not null]
+  days_of_week  smallint [default: 127, note: 'Bitmaske Mo–So']
+  is_active     boolean [default: true]
+}
+
+// ───────── Gesundheit ─────────
+
+Table vet_appointments {
+  id           uuid [pk, default: `gen_random_uuid()`]
+  pet_id       uuid [ref: > pets.id, not null]
+  title        varchar(150) [not null]
+  vet_name     varchar(150)
+  scheduled_at timestamptz [not null]
+  notes        text
+  completed    boolean [default: false]
+}
+
+Table health_notes {
+  id          uuid [pk, default: `gen_random_uuid()`]
+  pet_id      uuid [ref: > pets.id, not null]
+  author_id   uuid [ref: > users.id]
+  category    varchar(30) [note: 'allergy, medication, vaccination, other']
+  text        text [not null]
+  created_at  timestamptz [default: `now()`]
+}
+
+// ───────── Benachrichtigungen ─────────
+
+Table notifications {
+  id          uuid [pk, default: `gen_random_uuid()`]
+  user_id     uuid [ref: > users.id, not null]
+  type        varchar(30) [not null, note: 'feeding_due, low_stock, vet_reminder, invite']
+  title       varchar(150) [not null]
+  body        varchar(500)
+  pet_id      uuid [ref: > pets.id]
+  read_at     timestamptz
+  created_at  timestamptz [default: `now()`]
+}
+
+Table notification_settings {
+  user_id          uuid [pk, ref: - users.id]
+  feeding_reminder boolean [default: true]
+  low_stock_alert  boolean [default: true]
+  vet_reminder     boolean [default: true]
+  push_enabled     boolean [default: false]
+}

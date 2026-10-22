@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"log"
+	"os"
 	"testing"
 	"time"
 
@@ -27,7 +28,7 @@ func mustStartPostgresContainer() (func(context.Context, ...testcontainers.Termi
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
 				WithOccurrence(2).
-				WithStartupTimeout(5*time.Second)),
+				WithStartupTimeout(10*time.Second)),
 	)
 	if err != nil {
 		return nil, err
@@ -59,24 +60,44 @@ func TestMain(m *testing.M) {
 		log.Fatalf("could not start postgres container: %v", err)
 	}
 
-	m.Run()
+	code := m.Run()
 
-	if teardown != nil && teardown(context.Background()) != nil {
+	err = teardown(context.Background())
+
+	if teardown != nil && err != nil {
 		log.Fatalf("could not teardown postgres container: %v", err)
 	}
+	os.Exit(code)
+
 }
 
 func TestNew(t *testing.T) {
-	srv := New()
-	if srv == nil {
+	db := New()
+	if db == nil {
 		t.Fatal("New() returned nil")
+	}
+	defer db.Close()
+
+	err := db.Ping()
+	if err != nil {
+		t.Fatalf("error reaching db %s", err)
 	}
 }
 
 func TestHealth(t *testing.T) {
-	srv := New()
+	db := New()
 
-	stats := srv.Health()
+	if db == nil {
+		t.Fatal("New() returned nil")
+	}
+
+	defer db.Close()
+
+	stats, err := Health(db)
+
+	if err != nil {
+		t.Errorf("health check failed %s", err)
+	}
 
 	if stats["status"] != "up" {
 		t.Fatalf("expected status to be up, got %s", stats["status"])
@@ -92,9 +113,9 @@ func TestHealth(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	srv := New()
+	db := New()
 
-	if srv.Close() != nil {
+	if Close(db) != nil {
 		t.Fatalf("expected Close() to return nil")
 	}
 }

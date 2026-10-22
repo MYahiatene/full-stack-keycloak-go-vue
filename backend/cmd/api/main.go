@@ -1,7 +1,10 @@
 package main
 
 import (
+	"backend/internal/database"
+	"backend/migrations"
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -11,6 +14,8 @@ import (
 	"time"
 
 	"backend/internal/server"
+
+	"github.com/pressly/goose/v3"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {
@@ -39,8 +44,33 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
+	db := database.New()
+	defer func(db *sql.DB) {
+		err := database.Close(db)
+		if err != nil {
+			fmt.Printf("%s", err)
 
-	srv := server.NewServer()
+		}
+	}(db)
+
+	stats, dberr := database.Health(db)
+	if dberr != nil {
+		log.Printf("db status: %s", stats["status"])
+		log.Printf("%s", stats["message"])
+		panic(fmt.Errorf("error starting DB %w", dberr))
+	}
+
+	goose.SetBaseFS(migrations.FS)
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		panic(err)
+	}
+
+	if err := goose.Up(db, "."); err != nil {
+		panic(err)
+	}
+
+	srv := server.NewServer(db)
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
