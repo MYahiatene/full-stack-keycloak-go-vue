@@ -1,0 +1,16 @@
+### HINT: Create http-client.private.env.json with credentials and don't check into version control
+### POST Request Access Token
+POST http://localhost:8080/realms/futterhaus-realm/protocol/openid-connect/token
+Accept: application/json
+Content-Type: application/x-www-form-urlencoded
+
+grant_type = password &
+client_id = {{client_id}} &
+scope = openid &
+username = {{username}} &
+password = {{password}} &
+client_secret = {{client_secret}}
+
+> {%
+    client.global.set("access_token", response.body.access_token);
+%}
