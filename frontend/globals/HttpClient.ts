@@ -1,5 +1,5 @@
 import {useKeycloak} from "./useKeycloak";
-import {keycloak} from "../src/auth/keycloak";
+import {keycloak} from "@/auth/keycloak.ts";
 
 const {updateToken} = useKeycloak()
 
@@ -14,7 +14,7 @@ export async function executeRequest(url: URL): Promise<Response> {
 
 
   const headers = new Headers();
-  headers.set('authorization', bearerToken)
+  headers.set('Authorization', bearerToken)
 
   const options: RequestInit = {headers}
   const request: Request = new Request(url, options)
