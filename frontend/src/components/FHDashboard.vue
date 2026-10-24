@@ -9,10 +9,10 @@
 
 
 <script setup lang="ts">
-import {executeRequest} from "@/../globals/HttpClient.ts";
+import {executeRequest} from "@/../globals/httpClient.ts";
 
 async function onClickButton(): Promise<void> {
-  await executeRequest(new URL('http://localhost:8088'))
+  await executeRequest(new URL('http://localhost:8088/api/ping'))
 
 }
 
