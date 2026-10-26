@@ -1,4 +1,3 @@
-import {describe, expect, it, vi} from 'vitest'
 import {executeRequest} from "./httpClient";
 
 const {updateTokenSpy} = vi.hoisted(() => ({updateTokenSpy: vi.fn()}))
