@@ -18,6 +18,7 @@ Table users {
 Table households {
   id          uuid [pk, default: `gen_random_uuid()`]
   name        varchar(100) [not null, note: 'z. B. "Familie Yahiatene"']
+  timezone    varchar(50) [not null, default: 'Europe/Berlin', note: 'Zeitzone, in der Feeding-Schedules ausgewertet werden']
   created_by  uuid [ref: > users.id]
   created_at  timestamptz [default: `now()`]
 }
@@ -161,11 +162,18 @@ Table vet_appointments {
   completed    boolean [default: false]
 }
 
+Enum health_note_category {
+  allergy
+  medication
+  vaccination
+  other
+}
+
 Table health_notes {
   id          uuid [pk, default: `gen_random_uuid()`]
   pet_id      uuid [ref: > pets.id, not null]
   author_id   uuid [ref: > users.id]
-  category    varchar(30) [note: 'allergy, medication, vaccination, other']
+  category    health_note_category [not null, default: 'other']
   text        text [not null]
   created_at  timestamptz [default: `now()`]
 }
