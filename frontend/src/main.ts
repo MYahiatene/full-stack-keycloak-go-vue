@@ -2,8 +2,8 @@ import {createApp} from 'vue'
 import {createPinia} from 'pinia'
 
 import App from './App.vue'
-import router from './router'
 import {initKeycloak} from "@/auth/keycloak.ts";
+import {createAppRouter} from "@/router";
 
 
 //TODO: Global error handler event listener
@@ -14,6 +14,6 @@ await initKeycloak()
 const app = createApp(App)
 
 app.use(createPinia())
-app.use(router)
+app.use(createAppRouter())
 
 app.mount('#app')
