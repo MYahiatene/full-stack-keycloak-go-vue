@@ -26,9 +26,23 @@ func New() *sql.DB {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s", username, password, host, port, database, schema)
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
-		panic(fmt.Sprintf("%s", err))
+		panic(fmt.Errorf("error opening db: %w", err))
 	}
-	return db
+
+	dbRetry := 10
+	for i := 1; i <= dbRetry; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		err = db.PingContext(ctx)
+		cancel()
+		if err == nil {
+			return db
+		}
+		log.Printf("db not reachable (attempt %d/%d): %v", i, dbRetry, err)
+		if i < dbRetry {
+			time.Sleep(3 * time.Second)
+		}
+	}
+	panic(fmt.Errorf("error connecting to db after %d attempts: %w", dbRetry, err))
 }
 
 // Health checks the health of the database connection by pinging the database.

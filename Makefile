@@ -46,12 +46,9 @@ clean: stop backend-clean frontend-clean
 # Docker (Keycloak + Datenbanken)
 # ---------------------------------------------------------------------------
 
+# --wait blockiert, bis alle Services mit Healthcheck (die Datenbanken) healthy sind
 docker-run:
-	@if docker compose up -d 2>/dev/null; then \
-		: ; \
-	else \
-		docker-compose up -d; \
-	fi
+	docker compose up -d --wait
 
 docker-down:
 	@if docker compose down 2>/dev/null; then \

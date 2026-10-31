@@ -13,7 +13,8 @@ services:
     volumes:
       - ./keycloak/import:/opt/keycloak/data/import:ro
     depends_on:
-      - keycloakdb
+      keycloakdb:
+        condition: service_healthy
     environment:
       # Datenbank-Konfiguration
       KC_DB: postgres
@@ -45,6 +46,11 @@ services:
       POSTGRES_DB: keycloak
       POSTGRES_USER: ${DB_USER_KC}
       POSTGRES_PASSWORD: ${DB_PW_KC}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
 
   godb:
     image: postgres:${TAG_DB}
@@ -57,3 +63,8 @@ services:
       POSTGRES_DB: backend
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PW}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
