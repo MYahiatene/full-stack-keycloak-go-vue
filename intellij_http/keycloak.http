@@ -5,10 +5,10 @@ Accept: application/json
 Content-Type: application/x-www-form-urlencoded
 
 grant_type = password &
-client_id = {{client_id}} &
 scope = openid &
 username = {{username}} &
 password = {{password}} &
+client_id = {{client_id}} &
 client_secret = {{client_secret}}
 
 > {%

@@ -1,13 +1,12 @@
 import Keycloak from 'keycloak-js';
 
-// TODO: Use env variables
-// TODO: Tests
-export const keycloak = new Keycloak({
-  url: "http://localhost:8080",
-  realm: "futterhaus-realm",
-  clientId: "futterhaus-frontend"
-});
+// TODO: Tests mit vi.stubEnv
 
+export const keycloak = new Keycloak({
+  url: import.meta.env.VITE_KEYCLOAK_URL,
+  realm: import.meta.env.VITE_KEYCLOAK_REALM,
+  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
+});
 
 export async function initKeycloak(): Promise<void> {
   try {
