@@ -13,11 +13,13 @@ dev:
 	@echo "1. Starte Infrastruktur (Keycloak, Datenbanken)..."
 	$(MAKE) docker-run
 
+	@mkdir -p .dev
+
 	@echo "2. Starte Backend (Watch-Mode)..."
-	cd backend && air &
+	@setsid sh -c 'cd backend && exec air' & echo $$! > .dev/backend.pid
 
 	@echo "3. Starte Vue-Frontend..."
-	cd frontend && npm run dev &
+	@setsid sh -c 'cd frontend && exec npm run dev' & echo $$! > .dev/frontend.pid
 
 	@echo "--------------------------------------------------"
 	@echo "Alle Dienste laufen im Hintergrund!"
@@ -28,11 +30,13 @@ dev:
 	@echo "--------------------------------------------------"
 
 stop:
+	@echo "Stoppe lokale Entwicklungsprozesse (Go/Vite)..."
+	-@kill -TERM -$$(cat .dev/backend.pid 2>/dev/null)
+	-@kill -TERM -$$(cat .dev/frontend.pid 2>/dev/null)
+	rm -rf .dev
+
 	@echo "Stoppe Docker-Dienste..."
 	$(MAKE) docker-down
-	@echo "Stoppe lokale Entwicklungsprozesse (Go/Vite)..."
-	@pkill -f "air" || true
-	@pkill -f "vite" || true
 	@echo "Alles gestoppt."
 
 build: backend-build frontend-build
