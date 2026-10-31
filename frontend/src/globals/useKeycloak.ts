@@ -1,4 +1,4 @@
-import {keycloak} from "../src/auth/keycloak";
+import {keycloak} from "@/auth/keycloak.ts";
 //Todo: test
 interface UseKeycloak {
   updateToken: () => void

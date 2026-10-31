@@ -1,4 +1,4 @@
-import {useKeycloak} from "./useKeycloak";
+import {useKeycloak} from "./useKeycloak.ts";
 import {keycloak} from "@/auth/keycloak.ts";
 
 const {updateToken} = useKeycloak()

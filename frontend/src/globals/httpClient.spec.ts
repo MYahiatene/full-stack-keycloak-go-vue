@@ -1,4 +1,4 @@
-import {executeRequest} from "./httpClient";
+import {executeRequest} from "./httpClient.ts";
 
 const {updateTokenSpy} = vi.hoisted(() => ({updateTokenSpy: vi.fn()}))
 vi.mock('./useKeycloak', () => ({useKeycloak: () => ({updateToken: updateTokenSpy})}))
